@@ -198,3 +198,32 @@ def update_incident(
         ) from error
 
     return incident
+
+
+@router.delete("/{incident_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_incident(
+    incident_id: int,
+    database: Session = Depends(get_database),
+):
+    query = select(Incident).where(
+        Incident.id == incident_id,
+        Incident.is_deleted.is_(False),
+    )
+    incident = database.scalar(query)
+
+    if incident is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Incidencia no encontrada.",
+        )
+
+    incident.is_deleted = True
+
+    try:
+        database.commit()
+    except SQLAlchemyError as error:
+        database.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No se pudo eliminar la incidencia.",
+        ) from error
