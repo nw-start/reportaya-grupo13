@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -8,7 +9,7 @@ from sqlalchemy.orm import selectinload
 
 from database import get_database
 from models import Incident, IncidentType, User
-from schemas import IncidentCreate, IncidentResponse, IncidentStatus
+from schemas import IncidentCreate, IncidentResponse, IncidentStatus, IncidentUpdate
 
 
 router = APIRouter(prefix="/api/incidencias", tags=["Incidencias"])
@@ -134,5 +135,66 @@ def get_incident(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Incidencia no encontrada.",
         )
+
+    return incident
+
+
+@router.patch("/{incident_id}", response_model=IncidentResponse)
+def update_incident(
+    incident_id: int,
+    incident_data: IncidentUpdate,
+    database: Session = Depends(get_database),
+):
+    query = select(Incident).where(
+        Incident.id == incident_id,
+        Incident.is_deleted.is_(False),
+    ).options(
+        selectinload(Incident.incident_type),
+        selectinload(Incident.registered_by),
+    )
+    incident = database.scalar(query)
+
+    if incident is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Incidencia no encontrada.",
+        )
+
+    changes = incident_data.model_dump(exclude_unset=True)
+    if not changes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Debe ingresar al menos un campo para actualizar.",
+        )
+
+    if "incident_type_id" in changes:
+        incident_type = database.get(IncidentType, changes["incident_type_id"])
+        if incident_type is None or not incident_type.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El tipo de incidencia no es valido.",
+            )
+        incident.incident_type_id = incident_type.id
+
+    for field in ("description", "location", "attention_note"):
+        if field in changes:
+            setattr(incident, field, changes[field])
+
+    if "status" in changes:
+        new_status = changes["status"]
+        incident.status = new_status.value
+        incident.attended_at = (
+            datetime.now() if new_status == IncidentStatus.ATTENDED else None
+        )
+
+    try:
+        database.commit()
+        database.refresh(incident)
+    except SQLAlchemyError as error:
+        database.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No se pudo actualizar la incidencia.",
+        ) from error
 
     return incident
