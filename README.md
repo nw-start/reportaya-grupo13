@@ -25,8 +25,15 @@ La base de datos central del proyecto es MySQL. Para configurar la conexión,
 copiar `.env.example` como `.env` y completar los datos del servidor:
 
 ```env
-DATABASE_URL=mysql+pymysql://usuario:contrasena@localhost:3306/reportaya
+DB_HOST=mysql-host.aivencloud.com
+DB_PORT=12345
+DB_NAME=defaultdb
+DB_USER=avnadmin
+DB_PASSWORD=reemplazar_con_la_contrasena
 ```
+
+En Aiven, estos valores se encuentran en la sección `Overview` del servicio.
+El archivo `.env` es privado y no debe subirse al repositorio.
 
 Mientras no exista un archivo `.env`, la aplicación crea `reportaya_dev.db`, una base SQLite local
 para facilitar el desarrollo. Esta base es temporal y no reemplaza la base
