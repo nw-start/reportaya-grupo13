@@ -7,7 +7,7 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./reportaya.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./reportaya_dev.db")
 
 engine_options = {"pool_pre_ping": True}
 

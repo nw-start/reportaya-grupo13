@@ -28,7 +28,7 @@ copiar `.env.example` como `.env` y completar los datos del servidor:
 DATABASE_URL=mysql+pymysql://usuario:contrasena@localhost:3306/reportaya
 ```
 
-Mientras no exista un archivo `.env`, la aplicación crea una base SQLite local
+Mientras no exista un archivo `.env`, la aplicación crea `reportaya_dev.db`, una base SQLite local
 para facilitar el desarrollo. Esta base es temporal y no reemplaza la base
 MySQL del proyecto.
 
