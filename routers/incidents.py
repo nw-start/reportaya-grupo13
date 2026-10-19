@@ -9,16 +9,36 @@ from sqlalchemy.orm import selectinload
 
 from database import get_database
 from models import Incident, IncidentType, User
-from schemas import IncidentCreate, IncidentResponse, IncidentStatus, IncidentUpdate
+from routers.auth import current_user
+from schemas import (
+    IncidentCreate,
+    IncidentResponse,
+    IncidentStatus,
+    IncidentUpdate,
+    UserRole,
+)
 
 
 router = APIRouter(prefix="/api/incidencias", tags=["Incidencias"])
+
+
+def is_administrator(user: User) -> bool:
+    return user.role == UserRole.ADMINISTRATOR.value
+
+
+def validate_incident_access(incident: Incident, user: User):
+    if not is_administrator(user) and incident.registered_by_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Incidencia no encontrada.",
+        )
 
 
 @router.post("", response_model=IncidentResponse, status_code=status.HTTP_201_CREATED)
 def create_incident(
     incident_data: IncidentCreate,
     database: Session = Depends(get_database),
+    authenticated_user: User = Depends(current_user),
 ):
     incident_type = database.get(IncidentType, incident_data.incident_type_id)
     if incident_type is None or not incident_type.is_active:
@@ -32,6 +52,15 @@ def create_incident(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="El usuario no es valido.",
+        )
+
+    if (
+        not is_administrator(authenticated_user)
+        and registered_by.id != authenticated_user.id
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No puede registrar una incidencia para otro usuario.",
         )
 
     incident = Incident(
@@ -63,7 +92,10 @@ def create_incident(
 
 
 @router.get("", response_model=list[IncidentResponse])
-def list_incidents(database: Session = Depends(get_database)):
+def list_incidents(
+    database: Session = Depends(get_database),
+    authenticated_user: User = Depends(current_user),
+):
     query = (
         select(Incident)
         .options(
@@ -74,6 +106,9 @@ def list_incidents(database: Session = Depends(get_database)):
         .order_by(Incident.registration_date.desc(), Incident.id.desc())
     )
 
+    if not is_administrator(authenticated_user):
+        query = query.where(Incident.registered_by_id == authenticated_user.id)
+
     return database.scalars(query).all()
 
 
@@ -81,6 +116,7 @@ def list_incidents(database: Session = Depends(get_database)):
 def search_incidents(
     criterio: str = Query(min_length=1, max_length=250),
     database: Session = Depends(get_database),
+    authenticated_user: User = Depends(current_user),
 ):
     search_term = criterio.strip()
 
@@ -113,6 +149,9 @@ def search_incidents(
         .order_by(Incident.registration_date.desc(), Incident.id.desc())
     )
 
+    if not is_administrator(authenticated_user):
+        query = query.where(Incident.registered_by_id == authenticated_user.id)
+
     return database.scalars(query).all()
 
 
@@ -120,6 +159,7 @@ def search_incidents(
 def get_incident(
     incident_id: int,
     database: Session = Depends(get_database),
+    authenticated_user: User = Depends(current_user),
 ):
     query = select(Incident).where(
         Incident.id == incident_id,
@@ -136,6 +176,7 @@ def get_incident(
             detail="Incidencia no encontrada.",
         )
 
+    validate_incident_access(incident, authenticated_user)
     return incident
 
 
@@ -144,6 +185,7 @@ def update_incident(
     incident_id: int,
     incident_data: IncidentUpdate,
     database: Session = Depends(get_database),
+    authenticated_user: User = Depends(current_user),
 ):
     query = select(Incident).where(
         Incident.id == incident_id,
@@ -160,12 +202,26 @@ def update_incident(
             detail="Incidencia no encontrada.",
         )
 
+    validate_incident_access(incident, authenticated_user)
+
     changes = incident_data.model_dump(exclude_unset=True)
     if not changes:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Debe ingresar al menos un campo para actualizar.",
         )
+
+    if not is_administrator(authenticated_user):
+        if incident.status != IncidentStatus.PENDING.value:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Solo se pueden modificar incidencias pendientes.",
+            )
+        if "status" in changes or "attention_note" in changes:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="El residente no puede cambiar el estado de la incidencia.",
+            )
 
     if "incident_type_id" in changes:
         incident_type = database.get(IncidentType, changes["incident_type_id"])
@@ -204,6 +260,7 @@ def update_incident(
 def delete_incident(
     incident_id: int,
     database: Session = Depends(get_database),
+    authenticated_user: User = Depends(current_user),
 ):
     query = select(Incident).where(
         Incident.id == incident_id,
@@ -215,6 +272,16 @@ def delete_incident(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Incidencia no encontrada.",
+        )
+
+    validate_incident_access(incident, authenticated_user)
+    if (
+        not is_administrator(authenticated_user)
+        and incident.status != IncidentStatus.PENDING.value
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Solo se pueden eliminar incidencias pendientes.",
         )
 
     incident.is_deleted = True

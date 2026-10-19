@@ -22,13 +22,10 @@ def authentication_error(detail: str):
     )
 
 
-def current_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
-    database: Session = Depends(get_database),
+def get_user_from_credentials(
+    credentials: HTTPAuthorizationCredentials,
+    database: Session,
 ) -> User:
-    if credentials is None:
-        raise authentication_error("Debe iniciar sesion.")
-
     try:
         payload = decode_access_token(credentials.credentials)
         user_id = int(payload["sub"])
@@ -40,6 +37,24 @@ def current_user(
         raise authentication_error("Usuario inactivo o inexistente.")
 
     return user
+
+
+def optional_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
+    database: Session = Depends(get_database),
+) -> User | None:
+    if credentials is None:
+        return None
+    return get_user_from_credentials(credentials, database)
+
+
+def current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
+    database: Session = Depends(get_database),
+) -> User:
+    if credentials is None:
+        raise authentication_error("Debe iniciar sesion.")
+    return get_user_from_credentials(credentials, database)
 
 
 def administrator_user(user: User = Depends(current_user)) -> User:
