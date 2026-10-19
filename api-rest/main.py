@@ -3,6 +3,7 @@ from sqlalchemy import select
 
 from database import Base, SessionLocal, engine
 from models import IncidentType
+from routers.auth import router as auth_router
 from routers.incident_types import router as incident_types_router
 from routers.incidents import router as incidents_router
 from routers.users import router as users_router
@@ -37,6 +38,7 @@ app = FastAPI(
     version="0.1.0",
 )
 
+app.include_router(auth_router)
 app.include_router(incidents_router)
 app.include_router(incident_types_router)
 app.include_router(users_router)

@@ -1,7 +1,3 @@
-import base64
-import hashlib
-import secrets
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -9,31 +5,29 @@ from sqlalchemy.orm import Session
 
 from database import get_database
 from models import User
-from schemas import UserCreate, UserResponse
+from routers.auth import administrator_user, optional_current_user
+from schemas import UserCreate, UserResponse, UserRole
+from security import hash_password
 
 
 router = APIRouter(prefix="/api/usuarios", tags=["Usuarios"])
-
-
-def hash_password(password: str) -> str:
-    salt = secrets.token_bytes(16)
-    password_hash = hashlib.scrypt(
-        password.encode("utf-8"),
-        salt=salt,
-        n=16384,
-        r=8,
-        p=1,
-    )
-    encoded_salt = base64.urlsafe_b64encode(salt).decode("ascii")
-    encoded_hash = base64.urlsafe_b64encode(password_hash).decode("ascii")
-    return f"scrypt${encoded_salt}${encoded_hash}"
 
 
 @router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def create_user(
     user_data: UserCreate,
     database: Session = Depends(get_database),
+    authenticated_user: User | None = Depends(optional_current_user),
 ):
+    if user_data.role == UserRole.ADMINISTRATOR and (
+        authenticated_user is None
+        or authenticated_user.role != UserRole.ADMINISTRATOR.value
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo un administrador puede registrar otro administrador.",
+        )
+
     user = User(
         name=user_data.name,
         email=user_data.email,
@@ -56,7 +50,10 @@ def create_user(
 
 
 @router.get("", response_model=list[UserResponse])
-def list_users(database: Session = Depends(get_database)):
+def list_users(
+    database: Session = Depends(get_database),
+    _administrator: User = Depends(administrator_user),
+):
     query = (
         select(User)
         .where(User.is_active.is_(True))
