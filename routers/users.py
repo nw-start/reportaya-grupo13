@@ -1,7 +1,3 @@
-import base64
-import hashlib
-import secrets
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -10,24 +6,10 @@ from sqlalchemy.orm import Session
 from database import get_database
 from models import User
 from schemas import UserCreate, UserResponse
+from security import hash_password
 
 
 router = APIRouter(prefix="/api/usuarios", tags=["Usuarios"])
-
-
-def hash_password(password: str) -> str:
-    salt = secrets.token_bytes(16)
-    password_hash = hashlib.scrypt(
-        password.encode("utf-8"),
-        salt=salt,
-        n=16384,
-        r=8,
-        p=1,
-    )
-    encoded_salt = base64.urlsafe_b64encode(salt).decode("ascii")
-    encoded_hash = base64.urlsafe_b64encode(password_hash).decode("ascii")
-    return f"scrypt${encoded_salt}${encoded_hash}"
-
 
 @router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def create_user(

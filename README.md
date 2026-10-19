@@ -30,6 +30,7 @@ DB_PORT=12345
 DB_NAME=defaultdb
 DB_USER=avnadmin
 DB_PASSWORD=reemplazar_con_la_contrasena
+JWT_SECRET=reemplazar_con_un_secreto_de_al_menos_32_caracteres
 ```
 
 En Aiven, estos valores se encuentran en la sección `Overview` del servicio.
@@ -59,5 +60,6 @@ Start Command: uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
 
 Agregar en Render las variables `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y
-`DB_PASSWORD` con los datos del servicio MySQL. La versión de Python utilizada
-por el despliegue se encuentra en `.python-version`.
+`DB_PASSWORD` con los datos del servicio MySQL. También se debe configurar
+`JWT_SECRET` con una cadena aleatoria de al menos 32 caracteres. La versión de
+Python utilizada por el despliegue se encuentra en `.python-version`.

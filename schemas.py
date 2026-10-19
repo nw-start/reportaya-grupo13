@@ -36,6 +36,22 @@ class UserCreate(BaseModel):
         return value.lower()
 
 
+class LoginRequest(BaseModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+        str_strip_whitespace=True,
+        extra="forbid",
+    )
+
+    email: str = Field(alias="correo", min_length=5, max_length=120)
+    password: str = Field(alias="contrasena", min_length=8, max_length=72)
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str):
+        return value.lower()
+
+
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
@@ -45,6 +61,14 @@ class UserResponse(BaseModel):
     role: UserRole = Field(serialization_alias="rol")
     is_active: bool = Field(serialization_alias="activo")
     created_at: datetime = Field(serialization_alias="fechaCreacion")
+
+
+class AuthResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    access_token: str = Field(serialization_alias="accessToken")
+    token_type: str = Field(default="bearer", serialization_alias="tokenType")
+    user: UserResponse = Field(serialization_alias="usuario")
 
 
 class UserSummary(BaseModel):
