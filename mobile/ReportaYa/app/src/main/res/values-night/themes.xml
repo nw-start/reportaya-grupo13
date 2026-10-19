@@ -1,0 +1,17 @@
+<resources>
+    <style name="Theme.ReportaYa" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">#82D5CC</item>
+        <item name="colorOnPrimary">#003733</item>
+        <item name="colorPrimaryContainer">#00504B</item>
+        <item name="colorOnPrimaryContainer">#A6F2E8</item>
+        <item name="colorSecondary">#B1CCC7</item>
+        <item name="android:colorBackground">#101413</item>
+        <item name="colorSurface">#101413</item>
+        <item name="colorOnSurface">#E0E3E2</item>
+        <item name="colorOutline">#899390</item>
+        <item name="android:navigationBarColor">#101413</item>
+        <item name="android:statusBarColor">#101413</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:fontFamily">sans</item>
+    </style>
+</resources>
