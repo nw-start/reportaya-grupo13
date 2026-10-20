@@ -4,6 +4,12 @@ Portal administrativo para gestionar las incidencias de los residentes.
 
 Proyecto del curso Desarrollo de Aplicaciones Móviles I — Grupo 13.
 
+## Portal publicado
+
+[Abrir el portal web ReportaYa](https://reportaya-portal.onrender.com)
+
+Para ingresar se necesita una cuenta activa con rol Administrador.
+
 ## Funcionalidades
 
 - Inicio de sesión con una cuenta de administrador.
