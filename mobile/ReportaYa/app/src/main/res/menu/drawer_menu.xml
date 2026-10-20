@@ -1,0 +1,13 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item android:id="@+id/menu_home" android:icon="@drawable/ic_reporta_logo" android:title="@string/menu_home" />
+        <item android:id="@+id/menu_incidents" android:icon="@drawable/ic_list_alt" android:title="@string/menu_incidents" android:checked="true" />
+        <item android:id="@+id/menu_new_incident" android:icon="@drawable/ic_add_circle" android:title="@string/new_incident" />
+        <item android:id="@+id/menu_pending_operations" android:icon="@drawable/ic_sync_pending" android:title="@string/pending_operations_title" />
+    </group>
+    <item android:title="@string/drawer_account">
+        <menu>
+            <item android:id="@+id/menu_logout" android:title="@string/menu_logout" />
+        </menu>
+    </item>
+</menu>
