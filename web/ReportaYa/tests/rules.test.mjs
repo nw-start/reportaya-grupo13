@@ -1,0 +1,5 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {allowedTransitions,validateForm,safePhoto,localDate} from '../src/rules.mjs';
+test('estados terminales no retroceden',()=>{assert.deepEqual(allowedTransitions('Atendido'),[]);assert.deepEqual(allowedTransitions('Rechazado'),[]);assert.deepEqual(allowedTransitions('Pendiente'),['En proceso','Rechazado']);});
+test('formulario rechaza campos e identificadores inválidos',()=>{assert.equal(validateForm({descripcion:'corta',ubicacion:'',idTipoIncidencia:0,idUsuarioRegistro:0}).length,4);assert.deepEqual(validateForm({descripcion:'Fuga en la tubería principal',ubicacion:'Torre A',idTipoIncidencia:1,idUsuarioRegistro:1}),[]);});
+test('fotos limitadas a HTTP y HTTPS',()=>{assert.equal(safePhoto('javascript:alert(1)'),null);assert.equal(safePhoto('https://example.com/a.jpg'),'https://example.com/a.jpg');});
+test('fecha de registro usa calendario local',()=>assert.equal(localDate(new Date(2026,9,19,23,45)),'2026-10-19'));

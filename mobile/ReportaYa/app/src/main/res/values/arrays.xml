@@ -1,0 +1,10 @@
+<resources>
+    <string-array name="incident_types">
+        <item>Fuga de agua</item>
+        <item>Ascensor</item>
+        <item>Ruido</item>
+        <item>Seguridad</item>
+        <item>Limpieza</item>
+        <item>Otro</item>
+    </string-array>
+</resources>

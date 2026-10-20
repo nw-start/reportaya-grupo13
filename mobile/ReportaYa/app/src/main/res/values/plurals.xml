@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="pending_operations_count">
+        <item quantity="one">%d operación pendiente</item>
+        <item quantity="other">%d operaciones pendientes</item>
+    </plurals>
+</resources>
